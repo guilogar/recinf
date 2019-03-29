@@ -1,0 +1,25 @@
+Component 1: Y component: Quantization table 0, Sampling factors 2 horiz/2 vert
+Component 2: Cb component: Quantization table 1, Sampling factors 1 horiz/1 vert
+Component 3: Cr component: Quantization table 1, Sampling factors 1 horiz/1 vert
+Compression Type: Progressive, Huffman
+Content-Length: 163975
+Content-Type: image/jpeg
+Data Precision: 8 bits
+File Modified Date: jue mar 28 13:47:27 +01:00 2019
+File Name: primera.jpg
+File Size: 163975 bytes
+Image Height: 554 pixels
+Image Width: 830 pixels
+Number of Components: 3
+Number of Tables: 2 Huffman tables
+Resolution Units: inch
+Thumbnail Height Pixels: 0
+Thumbnail Width Pixels: 0
+X Resolution: 72 dots
+X-Parsed-By: org.apache.tika.parser.DefaultParser
+X-Parsed-By: org.apache.tika.parser.jpeg.JpegParser
+Y Resolution: 72 dots
+resourceName: primera.jpg
+tiff:BitsPerSample: 8
+tiff:ImageLength: 554
+tiff:ImageWidth: 830

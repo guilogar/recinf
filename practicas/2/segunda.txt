@@ -1,0 +1,26 @@
+Chroma BlackIsZero: true
+Chroma ColorSpaceType: RGB
+Chroma NumChannels: 3
+Compression CompressionTypeName: deflate
+Compression Lossless: true
+Compression NumProgressiveScans: 1
+Content-Length: 66492
+Content-Type: image/png
+Data BitsPerSample: 8 8 8
+Data PlanarConfiguration: PixelInterleaved
+Data SampleFormat: UnsignedIntegral
+Dimension HorizontalPixelSize: 0.21177468
+Dimension ImageOrientation: Normal
+Dimension PixelAspectRatio: 0.9997883
+Dimension VerticalPixelSize: 0.21172984
+IHDR: width=850, height=614, bitDepth=8, colorType=RGB, compressionMethod=deflate, filterMethod=adaptive, interlaceMethod=none
+Transparency Alpha: none
+X-Parsed-By: org.apache.tika.parser.DefaultParser
+X-Parsed-By: org.apache.tika.parser.image.ImageParser
+height: 614
+pHYs: pixelsPerUnitXAxis=4722, pixelsPerUnitYAxis=4723, unitSpecifier=meter
+resourceName: segunda.png
+tiff:BitsPerSample: 8 8 8
+tiff:ImageLength: 614
+tiff:ImageWidth: 850
+width: 850

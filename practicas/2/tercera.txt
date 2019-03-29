@@ -1,0 +1,30 @@
+Chroma BackgroundColor: red=255, green=255, blue=255
+Chroma BlackIsZero: true
+Chroma ColorSpaceType: RGB
+Chroma Gamma: 0.45455
+Chroma NumChannels: 4
+Compression CompressionTypeName: deflate
+Compression Lossless: true
+Compression NumProgressiveScans: 1
+Content-Length: 408968
+Content-Type: image/png
+Data BitsPerSample: 8 8 8 8
+Data PlanarConfiguration: PixelInterleaved
+Data SampleFormat: UnsignedIntegral
+Dimension ImageOrientation: Normal
+Dimension PixelAspectRatio: 1.0
+Document ImageModificationTime: year=2017, month=8, day=10, hour=8, minute=16, second=39
+IHDR: width=2000, height=1500, bitDepth=8, colorType=RGBAlpha, compressionMethod=deflate, filterMethod=adaptive, interlaceMethod=none
+Transparency Alpha: nonpremultipled
+X-Parsed-By: org.apache.tika.parser.DefaultParser
+X-Parsed-By: org.apache.tika.parser.image.ImageParser
+bKGD bKGD_RGB: red=255, green=255, blue=255
+cHRM: whitePointX=31270, whitePointY=32900, redX=64000, redY=33000, greenX=30000, greenY=60000, blueX=15000, blueY=6000
+gAMA: 45455
+height: 1500
+resourceName: tercera.png
+tIME: year=2017, month=8, day=10, hour=8, minute=16, second=39
+tiff:BitsPerSample: 8 8 8 8
+tiff:ImageLength: 1500
+tiff:ImageWidth: 2000
+width: 2000
