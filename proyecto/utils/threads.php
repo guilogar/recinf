@@ -16,7 +16,7 @@ class FicherosPreprocesados extends Threaded
     public function add(string $ruta_fichero, string $fichero_preprocesado)
     {
         //$this->data[sizeof($this->data)] = (object) $fichero_preprocesado;
-        $this->data[$ruta_fichero] = (object) $fichero_preprocesado;
+        $this->data[$ruta_fichero] = $fichero_preprocesado;
     }
 }
 
@@ -32,7 +32,7 @@ class StockWord extends Threaded
     public function add(string $ruta_fichero, string $stock_words)
     {
         //$this->data[sizeof($this->data)] = (object) $stock_words;
-        $this->data[$ruta_fichero] = (object) $stock_words;
+        $this->data[$ruta_fichero] = $stock_words;
     }
 }
 
@@ -48,7 +48,7 @@ class Stemming extends Threaded
     public function add(string $ruta_fichero, string $stemming)
     {
         //$this->data[sizeof($this->data)] = (object) $stemming;
-        $this->data[$ruta_fichero] = (object) $stemming;
+        $this->data[$ruta_fichero] = $stemming;
     }
 }
 
@@ -80,7 +80,7 @@ class Preprocesador extends Threaded
             $this->f->synchronized(function ($f, $ruta_fichero, $texto_fichero_parseado)
             {
                 $f->add($ruta_fichero, $texto_fichero_parseado);
-            }, $this->f, $ruta_fichero, $texto_fichero_parseado);
+            }, $this->f, basename($fichero), $texto_fichero_parseado);
         }
     }
 }
@@ -96,5 +96,24 @@ class FiltroTerminos extends Threaded
         $this->ficheros = $ficheros;
         $this->filtros = $filtros;
         $this->f = $f;
+    }
+    
+    public function run()
+    {
+        foreach($this->ficheros as $fichero)
+        {
+            $texto_fichero          = file_get_contents($fichero, FILE_USE_INCLUDE_PATH);
+            $texto_fichero_parseado = $texto_fichero;
+            
+            foreach($this->filtros as $filtro)
+            {
+                $texto_fichero_parseado = $filtro->parsear($texto_fichero_parseado);
+            }
+            
+            $this->f->synchronized(function ($f, $ruta_fichero, $texto_fichero_parseado)
+            {
+                $f->add($ruta_fichero, $texto_fichero_parseado);
+            }, $this->f, basename($fichero), $texto_fichero_parseado);
+        }
     }
 }
