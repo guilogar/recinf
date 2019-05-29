@@ -36,7 +36,7 @@ class DataStockWord extends Threaded
     }
 }
 
-class DataStemming extends Threaded
+class DataStemming extends Volatile
 {
     public $data;
     
@@ -45,30 +45,33 @@ class DataStemming extends Threaded
         $this->data = [];
     }
     
-    public function isIN(string $stem, string $word)
+    public function addArray(array $palabras_stemming)
     {
-        if(!isset($this->data[$stem])) return false;
-        
-        if($stem === $word) return true;
-        
-        $valores = (array) $this->data[$stem];
-        
-        return array_search($word, $valores) !== FALSE;
+        echo "Metiendo => " . sizeof($palabras_stemming) . "\n";
+        $this->data = array_merge_recursive((array) $this->data, $palabras_stemming);
+        echo "Metido \n";
+        /*
+         *$valores = (array) $this->data;
+         *$valores = array_merge_recursive($valores, $palabras_stemming);
+         *$this->data = (array) $valores;
+         */
+    }
+}
+
+class DataStemmingUnique extends Volatile
+{
+    public $data;
+    
+    public function __construct()
+    {
+        $this->data = [];
     }
     
-    public function add(string $stem, string $word)
+    public function addArray(array $pst_unique)
     {
-        if(!isset($this->data[$stem]))
-        {
-            $this->data[$stem] = [];
-        }
-        
-        if($stem !== $word)
-        {
-            $valores = (array) $this->data[$stem];
-            array_push($valores, $word);
-            $this->data[$stem] = (array) $valores;
-        }
+        $valores = (array) $this->data;
+        $valores = array_merge($valores, $pst_unique);
+        $this->data = (array) $valores;
     }
 }
 
@@ -138,7 +141,7 @@ class FiltroTerminos extends Threaded
     }
 }
 
-class Stemming extends Threaded
+class Stemming extends Volatile
 {
     private $ficheros;
     private $filtros;
@@ -153,9 +156,10 @@ class Stemming extends Threaded
     
     public function run()
     {
+        $data = array();
         foreach($this->ficheros as $fichero)
         {
-            echo $fichero . "\n";
+            //echo $fichero . "\n";
             $texto_fichero = file_get_contents($fichero, FILE_USE_INCLUDE_PATH);
             foreach($this->filtros as $filtro)
             {
@@ -165,14 +169,48 @@ class Stemming extends Threaded
             foreach($palabras as $word)
             {
                 $stem = stemword($word, "english", "UTF_8");
-                if(!$this->f->isIN($stem, $word))
+                if(!isset($data[$stem]))
                 {
-                    $this->f->synchronized(function ($f, $stem, $word)
-                    {
-                        $f->add($stem, $word);
-                    }, $this->f, $stem, $word);
+                    $data[$stem] = array();
+                }
+                
+                if($stem !== $word)
+                {
+                    array_push($data[$stem], $word);
                 }
             }
         }
+        
+        echo "Deseando entrar en el bloque sincronizado....\n";
+        $this->f->synchronized(function ($f, array $data)
+        {
+            $f->addArray($data);
+        }, $this->f, $data);
+        echo "Saliendo del bloque sincronizado....\n";
+    }
+}
+
+class StemmingUnique extends Threaded
+{
+    private $f;
+    private $stu;
+    
+    public function __construct(array $f, DataStemmingUnique $stu)
+    {
+        $this->f = $f;
+        $this->stu = $stu;
+    }
+    
+    public function run()
+    {
+        foreach ($this->f as $k => $v)
+        {
+            $v = array_unique($v);
+            $this->f[$k] = $v;
+        }
+        $this->stu->synchronized(function ($stu, $data)
+        {
+            $stu->addArray($data);
+        }, $this->stu, $this->f);
     }
 }

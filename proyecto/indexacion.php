@@ -1,5 +1,7 @@
 <?php
 
+ini_set('memory_limit', -1);
+
 define('DIR_CORPUS', '/home/oem/web/corpus');
 
 if(PHP_ZTS && class_exists("Thread"))
@@ -11,6 +13,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $fp = new DataFicherosPreprocesados();
     $sw = new DataStockWord();
     $st = new DataStemming();
+    $stu = new DataStemmingUnique();
     
     // #######################################################
     //                 Filtro de caracteres
@@ -137,18 +140,49 @@ if(PHP_ZTS && class_exists("Thread"))
     for ($i = 0; $i < $tam_pool; $i++)
     {
         $ff = array_slice($ficheros_stockword, $min, $max);
-        //$ff = array_slice($ficheros_stockword, 0, 500);
         $p = new Stemming($ff, $filtros, $st);
         $pool->submit($p);
-        break;
         $min = $max + 1;
         $max += $ventana;
     }
     while($pool->collect());
     $pool->shutdown();
     
-    $directorio_corpus_stemming = DIR_CORPUS . "/corpus_stemming";
-    var_dump($st->data);
+    /*
+     *$cb = 0.0;
+     *$num_cores = num_system_cores();
+     *$tam_pool = (int) ($num_cores / (1 - $cb));
+     *
+     *$pool = new Pool($tam_pool);
+     *$min = 0;
+     *$ventana = (int) (sizeof($st->data) / $tam_pool);
+     *$max = $ventana;
+     *
+     *for ($i = 0; $i < $tam_pool; $i++)
+     *{
+     *    $ff = array_slice($st->data, $min, $max);
+     *    $p = new StemmingUnique($ff, $stu);
+     *    $pool->submit($p);
+     *    $min = $max + 1;
+     *    $max += $ventana;
+     *}
+     *while($pool->collect());
+     *$pool->shutdown();
+     */
+    
+    /*
+     *$directorio_corpus_stemming = DIR_CORPUS . "/corpus_stemming";
+     *foreach ($st->data as $k => $v)
+     *{
+     *    echo $k . "\n";
+     *    $v = array_unique($v);
+     *    $st->data[$k] = $v;
+     *}
+     */
+    echo sizeof($st->data) . "\n";
+    echo sizeof($stu->data) . "\n";
+    //var_dump($st->data["crystal"]);
+    //var_dump($st->data);
     //var_dump($st->data['The']);die();
     /*
      *foreach ($st->data as $s => $t)
