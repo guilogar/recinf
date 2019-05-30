@@ -13,7 +13,11 @@ if(PHP_ZTS && class_exists("Thread"))
     $fp = new DataFicherosPreprocesados();
     $sw = new DataStockWord();
     $st = new DataStemming();
-    $stu = new DataStemmingUnique();
+    $tf = new DataTf();
+    
+    echo "---------------------------------------------------------------" . "\n";
+    echo "                     Filtro de Caracteres                      " . "\n";
+    echo "---------------------------------------------------------------" . "\n";
     
     // #######################################################
     //                 Filtro de caracteres
@@ -61,6 +65,12 @@ if(PHP_ZTS && class_exists("Thread"))
         $dir = $directorio_corpus_preprocesado . DIRECTORY_SEPARATOR;
         file_put_contents($dir . $f, $t);
     }
+    
+    echo "===============================================================" . "\n";
+    
+    echo "---------------------------------------------------------------" . "\n";
+    echo "                         StockWord                             " . "\n";
+    echo "---------------------------------------------------------------" . "\n";
     
     // #######################################################
     //                       StockWord
@@ -111,6 +121,11 @@ if(PHP_ZTS && class_exists("Thread"))
         file_put_contents($dir . $s, $w);
     }
     
+    echo "===============================================================" . "\n";
+    
+    echo "---------------------------------------------------------------" . "\n";
+    echo "                         Stemming                              " . "\n";
+    echo "---------------------------------------------------------------" . "\n";
     
     // #######################################################
     //                       Stemming
@@ -148,59 +163,80 @@ if(PHP_ZTS && class_exists("Thread"))
     while($pool->collect());
     $pool->shutdown();
     
-    /*
-     *$cb = 0.0;
-     *$num_cores = num_system_cores();
-     *$tam_pool = (int) ($num_cores / (1 - $cb));
-     *
-     *$pool = new Pool($tam_pool);
-     *$min = 0;
-     *$ventana = (int) (sizeof($st->data) / $tam_pool);
-     *$max = $ventana;
-     *
-     *for ($i = 0; $i < $tam_pool; $i++)
-     *{
-     *    $ff = array_slice($st->data, $min, $max);
-     *    $p = new StemmingUnique($ff, $stu);
-     *    $pool->submit($p);
-     *    $min = $max + 1;
-     *    $max += $ventana;
-     *}
-     *while($pool->collect());
-     *$pool->shutdown();
-     */
+    $directorio_corpus_stemming = DIR_CORPUS . "/corpus_stemming";
+    foreach ($st->data as $s => $t)
+    {
+        $dir = $directorio_corpus_stemming . DIRECTORY_SEPARATOR;
+        file_put_contents($dir . $s, $t);
+    }
+    
+    echo "===============================================================" . "\n";
+    
+    echo "---------------------------------------------------------------" . "\n";
+    echo "                           TF                              " . "\n";
+    echo "---------------------------------------------------------------" . "\n";
+    
+    // #######################################################
+    //                       TF*IDF
+    // #######################################################
+    $ficheros_stemming = scandir($directorio_corpus_stemming);
+    foreach ($ficheros_stemming as $k => $fichero)
+    {
+        $ficheros_stemming[$k] = $directorio_corpus_stemming . DIRECTORY_SEPARATOR . $fichero;
+        if(is_dir($directorio_corpus_stemming . DIRECTORY_SEPARATOR . $fichero))
+        {
+            unset($ficheros_stemming[$k]);
+        }
+    }
+    
+    $cb = 0.3;
+    $num_cores = num_system_cores();
+    $tam_pool = (int) ($num_cores / (1 - $cb));
+    
+    $pool = new Pool($tam_pool);
+    $min = 0;
+    $ventana = (int) (sizeof($ficheros_stemming) / $tam_pool);
+    $max = $ventana;
+    
+    $filtros = array();
+    for ($i = 0; $i < $tam_pool; $i++)
+    {
+        $ff = array_slice($ficheros_stemming, $min, $max);
+        $p = new Tfidf($ff, $filtros, $tf);
+        $pool->submit($p);
+        $min = $max + 1;
+        $max += $ventana;
+    }
+    while($pool->collect());
+    $pool->shutdown();
     
     /*
-     *$directorio_corpus_stemming = DIR_CORPUS . "/corpus_stemming";
-     *foreach ($st->data as $k => $v)
+     *var_dump($tf->data);
+     *foreach ($tf->data as $termino => $f)
      *{
-     *    echo $k . "\n";
-     *    $v = array_unique($v);
-     *    $st->data[$k] = $v;
+     *    if(sizeof($f) > 1) var_dump($f);
      *}
      */
-    echo sizeof($st->data) . "\n";
-    echo sizeof($stu->data) . "\n";
-    //var_dump($st->data["crystal"]);
-    //var_dump($st->data);
-    //var_dump($st->data['The']);die();
-    /*
-     *foreach ($st->data as $s => $t)
-     *{
-     *    $dir = $directorio_corpus_stemming . DIRECTORY_SEPARATOR;
-     *    var_dump($s);
-     *    var_dump($t);
-     *    break;
-     *}
-     */
-    /*
-     *$directorio_corpus_stemming = DIR_CORPUS . "/corpus_stemming";
-     *foreach ($st->data as $s => $t)
-     *{
-     *    $dir = $directorio_corpus_stemming . DIRECTORY_SEPARATOR;
-     *    file_put_contents($dir . $s, $t);
-     *}
-     */
+    echo "===============================================================" . "\n";
+    
+    echo "---------------------------------------------------------------" . "\n";
+    echo "                             IDF                               " . "\n";
+    echo "---------------------------------------------------------------" . "\n";
+    
+    $idf = new DataIdf();
+    //$idf->data = $tf->data;
+    
+    $terminos = array_keys($tf->data);
+    $valores  = array_values($tf->data);
+    $frecuencias = array();
+    foreach ($valores as $v)
+    {
+        array_push($frecuencias, sizeof($v));
+    }
+    
+    $idf->data = array_combine($terminos, $frecuencias);
+    
+    var_dump($idf->data);
 } else
 {
     
