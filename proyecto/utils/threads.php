@@ -75,7 +75,7 @@ class DataTf extends Threaded
     }
 }
 
-class DataIdf extends Threaded
+class DataIdf extends Volatile
 {
     public $data;
     

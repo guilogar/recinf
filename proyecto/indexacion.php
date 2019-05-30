@@ -226,8 +226,8 @@ if(PHP_ZTS && class_exists("Thread"))
     $idf = new DataIdf();
     //$idf->data = $tf->data;
     
-    $terminos = array_keys($tf->data);
-    $valores  = array_values($tf->data);
+    $terminos = array_keys  ((array) $tf->data);
+    $valores  = array_values((array) $tf->data);
     $frecuencias = array();
     foreach ($valores as $v)
     {
@@ -236,7 +236,10 @@ if(PHP_ZTS && class_exists("Thread"))
     
     $idf->data = array_combine($terminos, $frecuencias);
     
-    var_dump($idf->data);
+    //var_dump($idf->data);
+    foreach ($idf->data as $termino =>  $value) {
+        if($value > 1) echo $termino . " => " . $value . "\n";
+    }
 } else
 {
     
