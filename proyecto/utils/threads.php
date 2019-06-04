@@ -4,6 +4,26 @@ require_once "filtro.php";
 
 class Cerrojo extends Threaded { }
 
+class DataDeteccionDirectorios extends Volatile
+{
+    public $data;
+    
+    public function __construct()
+    {
+        $this->data = [];
+    }
+    
+    public function add(string $directorio)
+    {
+        $this->data[sizeof($this->data)] = $directorio;
+    }
+    
+    public function clean()
+    {
+        $this->data = [];
+    }
+}
+
 class DataFicherosPreprocesados extends Threaded
 {
     public $data;
@@ -89,6 +109,34 @@ class DataIdf extends Volatile
         foreach ($idf as $termino => $documentos)
         {
             $this->data[$termino] = $documentos;
+        }
+    }
+}
+
+class DeteccionDirectorio extends Threaded
+{
+    private $ficheros;
+    private $directorio_base;
+    private $f;
+    
+    public function __construct(array $ficheros, $directorio_base, DataDeteccionDirectorios $f)
+    {
+        $this->ficheros = $ficheros;
+        $this->directorio_base = $directorio_base;
+        $this->f = $f;
+    }
+    
+    public function run()
+    {
+        foreach ($this->ficheros as $fichero)
+        {
+            if(!is_dir($fichero))
+            {
+                $this->f->synchronized(function ($f, $directorio, $directorio_base)
+                {
+                    $f->add($directorio_base . DIRECTORY_SEPARATOR . $directorio);
+                }, $this->f, $fichero, $this->directorio_base);
+            }
         }
     }
 }
