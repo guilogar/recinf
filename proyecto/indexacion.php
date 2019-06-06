@@ -25,7 +25,7 @@ if(PHP_ZTS && class_exists("Thread"))
     //                 Filtro de caracteres
     // #######################################################
     $filtros = array(
-        new Filtro('/[\.\,¿\?¡\!\=\(\)\<\>\-\:\;\/]/', " "),
+        new Filtro('/[\.\,¿\?¡\!\=\(\)\<\>\-\:\;\/%]/', " "),
         new Filtro('/[  ]/', " "),
     );
     
@@ -55,7 +55,6 @@ if(PHP_ZTS && class_exists("Thread"))
     $ficheros = (array) $dd->data;
     $dd->clean();
     
-    echo "listo....";
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
@@ -77,7 +76,6 @@ if(PHP_ZTS && class_exists("Thread"))
         file_put_contents($dir . $f, $t);
     }
     
-    echo sizeof($dd->data) . '\n';
     echo "===============================================================" . "\n";
     
     echo "---------------------------------------------------------------" . "\n";
@@ -115,7 +113,6 @@ if(PHP_ZTS && class_exists("Thread"))
     
     $ficheros_preprocesados = (array) $dd->data;
     $dd->clean();
-    echo "listo....";
     
     $filtros = array();
     foreach($palabras_vacias as $pv)
@@ -144,7 +141,6 @@ if(PHP_ZTS && class_exists("Thread"))
         file_put_contents($dir . $s, $w);
     }
     
-    echo sizeof($dd->data) . '\n';
     echo "===============================================================" . "\n";
     
     echo "---------------------------------------------------------------" . "\n";
@@ -178,7 +174,6 @@ if(PHP_ZTS && class_exists("Thread"))
     
     $ficheros_stockword = (array) $dd->data;
     $dd->clean();
-    echo "listo....";
     
     $pool = new Pool($tam_pool);
     $min = 0;
@@ -205,7 +200,6 @@ if(PHP_ZTS && class_exists("Thread"))
         file_put_contents($dir . $s, $t);
     }
     
-    echo sizeof($dd->data) . '\n';
     echo "===============================================================" . "\n";
     
     echo "---------------------------------------------------------------" . "\n";
@@ -239,7 +233,6 @@ if(PHP_ZTS && class_exists("Thread"))
     
     $ficheros_stemming = (array) $dd->data;
     $dd->clean();
-    echo "listo....";
     
     $pool = new Pool($tam_pool);
     $min = 0;
@@ -249,7 +242,7 @@ if(PHP_ZTS && class_exists("Thread"))
     for ($i = 0; $i < $tam_pool; $i++)
     {
         $ff = array_slice($ficheros_stemming, $min, $max);
-        $p = new Tfidf($ff, $filtros, $tf);
+        $p = new Tf($ff, $filtros, $tf);
         $pool->submit($p);
         $min = $max + 1;
         $max += $ventana;
@@ -257,7 +250,6 @@ if(PHP_ZTS && class_exists("Thread"))
     while($pool->collect());
     $pool->shutdown();
     
-    echo sizeof($dd->data) . '\n';
     echo "===============================================================" . "\n";
     
     echo "---------------------------------------------------------------" . "\n";
@@ -280,24 +272,42 @@ if(PHP_ZTS && class_exists("Thread"))
     file_put_contents($directorio_tfidf . 'tf.json', json_encode($tf->data, JSON_PRETTY_PRINT));
     file_put_contents($directorio_tfidf . 'idf.json', json_encode($idf->data, JSON_PRETTY_PRINT));
     
+    echo "===============================================================" . "\n";
+    
+    echo "---------------------------------------------------------------" . "\n";
+    echo "                             TF-IDF                               " . "\n";
+    echo "---------------------------------------------------------------" . "\n";
+    
+    $cb = CB;
+    $num_cores = num_system_cores();
+    $tam_pool = (int) ($num_cores / (1 - $cb));
+    
+    $ventana = (int) (sizeof((array) $tf->data) / $tam_pool);
+    $pool = new Pool($tam_pool);
+    $min = 0;
+    $max = $ventana;
+    
+    $tfidf = new DataTfIdf();
+    $ff_tf  = (array) $tf->data;
+    $ff_idf = (array) $idf->data;
+    for ($i = 0; $i < $tam_pool; $i++)
+    {
+        $p = new TfIdf($ff_tf, $ff_idf, $tfidf, $min, $max);
+        $pool->submit($p);
+        $min = $max + 1;
+        $max += $ventana;
+    }
+    while($pool->collect());
+    $pool->shutdown();
+    
     /*
-     *$tfidf = $tf->data;
-     *foreach($tfidf as $termino => $documentos)
-     *{
-     *    foreach($documentos as $d => $f)
-     *    {
-     *        $documentos[$d] = $f * $idf->data[$termino];
-     *    }
-     *    $tfidf[$termino] = $documentos;
-     *}
-     *file_put_contents($directorio_tfidf . 'tfidf.json', json_encode($tfidf, JSON_PRETTY_PRINT));
-     */
-    //var_dump($idf->data);
-    /*
-     *foreach ($idf->data as $termino =>  $value) {
-     *    if($value > 1) echo $termino . " => " . $value . "\n";
+     *foreach ($tfidf->data as $value) {
+     *    var_dump($value);
+     *    break;
      *}
      */
+    file_put_contents($directorio_tfidf . 'tfidf.json', json_encode($tfidf->data, JSON_PRETTY_PRINT));
+    
 } else
 {
     

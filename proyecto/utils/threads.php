@@ -113,6 +113,24 @@ class DataIdf extends Volatile
     }
 }
 
+class DataTfIdf extends Threaded
+{
+    public $data;
+    
+    public function __construct(/*$tf, $idf*/)
+    {
+        $this->data = [];
+    }
+    
+    public function add(array &$tfidf)
+    {
+        foreach ($tfidf as $termino => $documentos)
+        {
+            $this->data[$termino] = (array) $documentos;
+        }
+    }
+}
+
 class DeteccionDirectorio extends Threaded
 {
     private $ficheros;
@@ -250,7 +268,7 @@ class Stemming extends Threaded
     }
 }
 
-class Tfidf extends Threaded
+class Tf extends Threaded
 {
     private $ficheros;
     private $filtros;
@@ -299,6 +317,44 @@ class Tfidf extends Threaded
         $this->f->synchronized(function ($f, array $tf)
         {
             $f->add($tf);
+        }, $this->f, $data);
+    }
+}
+
+class TfIdf extends Threaded
+{
+    private $tf;
+    private $idf;
+    private $f;
+    private $min, $max;
+    
+    public function __construct(array &$tf, array &$idf, DataTfIdf $f, $min = 0, $max = 0)
+    {
+        $this->tf  = (array) $tf;
+        $this->idf = (array) $idf;
+        $this->f   = $f;
+        $this->min = $min;
+        $this->max = $max;
+    }
+    
+    public function run()
+    {
+        $tf  = array_slice((array) $this->tf,  $this->min, $this->max);
+        $idf = array_slice((array) $this->idf, $this->min, $this->max);
+        $data = array();
+        
+        foreach($tf as $termino => $documentos)
+        {
+            foreach($documentos as $d => $f)
+            {
+                $documentos[$d] = $f * $idf[$termino];
+            }
+            $data[$termino] = $documentos;
+        }
+        
+        $this->f->synchronized(function ($f, array $tfidf)
+        {
+            $f->add($tfidf);
         }, $this->f, $data);
     }
 }
