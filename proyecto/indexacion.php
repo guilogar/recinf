@@ -41,7 +41,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
-    for ($i = 0; $i < $tam_pool; $i++)
+    for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $ff = array_slice($ficheros, $min, $max);
         $p = new DeteccionDirectorio($ff, $directorio_corpus, $dd);
@@ -58,7 +58,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
-    for ($i = 0; $i < $tam_pool; $i++)
+    for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $ff = array_slice($ficheros, $min, $max);
         $p = new Preprocesador($ff, $filtros, $fp);
@@ -103,7 +103,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
-    for ($i = 0; $i < $tam_pool; $i++)
+    for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $ff = array_slice($ficheros_preprocesados, $min, $max);
         $p = new DeteccionDirectorio($ff, $directorio_corpus_preprocesado, $dd);
@@ -126,7 +126,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
-    for ($i = 0; $i < $tam_pool; $i++)
+    for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $ff = array_slice($ficheros_preprocesados, $min, $max);
         $p = new FiltroTerminos($ff, $filtros, $sw);
@@ -167,7 +167,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
-    for ($i = 0; $i < $tam_pool; $i++)
+    for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $ff = array_slice($ficheros_stockword, $min, $max);
         $p = new DeteccionDirectorio($ff, $directorio_corpus_stockword, $dd);
@@ -188,7 +188,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $filtros = array(
         new Filtro('/(\r\n|\r|\n)/', " "),
     );
-    for ($i = 0; $i < $tam_pool; $i++)
+    for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $ff = array_slice($ficheros_stockword, $min, $max);
         $p = new Stemming($ff, $filtros, $st);
@@ -318,7 +318,7 @@ if(PHP_ZTS && class_exists("Thread"))
      *    break;
      *}
      */
-    var_dump($tfidf->data["The"]);
+    //var_dump(sizeof($tfidf->data["The"]));
     file_put_contents($directorio_tfidf . 'tfidf.json', json_encode($tfidf->data, JSON_PRETTY_PRINT));
     
 } else

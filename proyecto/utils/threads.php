@@ -88,10 +88,13 @@ class DataTf extends Threaded
             if(isset($this->data[$termino]))
                 $valores = (array) $this->data[$termino];
             
-            foreach($documentos as $d => $v)
-            {
-                $valores[$d] = $v;
-            }
+            $valores = array_merge((array) $valores, $documentos);
+            /*
+             *foreach($documentos as $d => $v)
+             *{
+             *    $valores[$d] = $v;
+             *}
+             */
             
             $this->data[$termino] = (array) $valores;
         }
@@ -311,13 +314,15 @@ class Tf extends Threaded
                 $ocurrencias = $num_palabras - $num_palabras_sin_w;
                 $tf = (double) ($ocurrencias / $num_palabras);
                 
-                $data[$word] = array(
+                $o = array(
                     $fich => $tf
                 );
+                if(!isset($data[$word]))
+                    $data[$word] = array();
+                
+                $data[$word] = array_merge($data[$word], $o);
             }
         }
-        if(isset($data["The"]))
-            var_dump($data["The"]);
         
         $this->f->synchronized(function ($f, array $tf)
         {
