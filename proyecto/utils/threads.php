@@ -86,9 +86,12 @@ class DataTf extends Threaded
         {
             $valores = array();
             if(isset($this->data[$termino]))
-                $valores = $this->data[$termino];
+                $valores = (array) $this->data[$termino];
             
-            $valores = array_merge((array) $valores, $documentos);
+            foreach($documentos as $d => $v)
+            {
+                $valores[$d] = $v;
+            }
             
             $this->data[$termino] = (array) $valores;
         }
@@ -313,6 +316,8 @@ class Tf extends Threaded
                 );
             }
         }
+        if(isset($data["The"]))
+            var_dump($data["The"]);
         
         $this->f->synchronized(function ($f, array $tf)
         {

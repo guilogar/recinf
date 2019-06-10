@@ -2,7 +2,7 @@
 
 ini_set('memory_limit', -1);
 
-define('DIR_CORPUS', '/home/oem/web/corpus');
+define('DIR_CORPUS', '/home/' . get_current_user() . '/web/corpus');
 define('CB', 0.0);
 
 if(PHP_ZTS && class_exists("Thread"))
@@ -70,6 +70,9 @@ if(PHP_ZTS && class_exists("Thread"))
     $pool->shutdown();
     
     $directorio_corpus_preprocesado = DIR_CORPUS . "/corpus_preprocesado";
+    if(!is_dir($directorio_corpus_preprocesado))
+        mkdir($directorio_corpus_preprocesado, 0777, true);
+    
     foreach ($fp->data as $f => $t)
     {
         $dir = $directorio_corpus_preprocesado . DIRECTORY_SEPARATOR;
@@ -135,6 +138,9 @@ if(PHP_ZTS && class_exists("Thread"))
     $pool->shutdown();
     
     $directorio_corpus_stockword = DIR_CORPUS . "/corpus_stockword";
+    if(!is_dir($directorio_corpus_stockword))
+        mkdir($directorio_corpus_stockword, 0777, true);
+    
     foreach ($sw->data as $s => $w)
     {
         $dir = $directorio_corpus_stockword . DIRECTORY_SEPARATOR;
@@ -194,6 +200,9 @@ if(PHP_ZTS && class_exists("Thread"))
     $pool->shutdown();
     
     $directorio_corpus_stemming = DIR_CORPUS . "/corpus_stemming";
+    if(!is_dir($directorio_corpus_stemming))
+        mkdir($directorio_corpus_stemming, 0777, true);
+    
     foreach ($st->data as $s => $t)
     {
         $dir = $directorio_corpus_stemming . DIRECTORY_SEPARATOR;
@@ -207,7 +216,7 @@ if(PHP_ZTS && class_exists("Thread"))
     echo "---------------------------------------------------------------" . "\n";
     
     // #######################################################
-    //                       TF*IDF
+    //                       TF
     // #######################################################
     $ficheros_stemming = scandir($directorio_corpus_stemming);
     
@@ -220,7 +229,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
-    for ($i = 0; $i < $tam_pool; $i++)
+    for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $ff = array_slice($ficheros_stemming, $min, $max);
         $p = new DeteccionDirectorio($ff, $directorio_corpus_stemming, $dd);
@@ -239,7 +248,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $max = $ventana;
     
     $filtros = array();
-    for ($i = 0; $i < $tam_pool; $i++)
+    for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $ff = array_slice($ficheros_stemming, $min, $max);
         $p = new Tf($ff, $filtros, $tf);
@@ -269,6 +278,9 @@ if(PHP_ZTS && class_exists("Thread"))
     $idf->data = array_combine($terminos, $frecuencias);
     
     $directorio_tfidf = DIR_CORPUS . "/tfidf" . DIRECTORY_SEPARATOR;
+    if(!is_dir($directorio_tfidf))
+        mkdir($directorio_tfidf, 0777, true);
+    
     file_put_contents($directorio_tfidf . 'tf.json', json_encode($tf->data, JSON_PRETTY_PRINT));
     file_put_contents($directorio_tfidf . 'idf.json', json_encode($idf->data, JSON_PRETTY_PRINT));
     
@@ -290,7 +302,7 @@ if(PHP_ZTS && class_exists("Thread"))
     $tfidf = new DataTfIdf();
     $ff_tf  = (array) $tf->data;
     $ff_idf = (array) $idf->data;
-    for ($i = 0; $i < $tam_pool; $i++)
+    for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $p = new TfIdf($ff_tf, $ff_idf, $tfidf, $min, $max);
         $pool->submit($p);
@@ -306,6 +318,7 @@ if(PHP_ZTS && class_exists("Thread"))
      *    break;
      *}
      */
+    var_dump($tfidf->data["The"]);
     file_put_contents($directorio_tfidf . 'tfidf.json', json_encode($tfidf->data, JSON_PRETTY_PRINT));
     
 } else

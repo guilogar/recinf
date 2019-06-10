@@ -21,3 +21,4 @@ function num_system_cores()
     
     return empty($cpuCoreNo) ? 1 : $cpuCoreNo;
 }
+
