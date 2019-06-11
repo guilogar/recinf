@@ -35,6 +35,10 @@ if(isset($argv[1]) && $argv[1] !== NULL)
 
 if($consulta_str === NULL) die("Consulta vacia, por favor, formulé una.");
 
+foreach($filtros as $filtro)
+{
+    $consulta_str = $filtro->parsear($consulta_str);
+}
 $consulta = explode(" ", $consulta_str);
 
 foreach($consulta as $indice => $palabra)
@@ -45,6 +49,7 @@ foreach($consulta as $indice => $palabra)
     }
     $palabra = stemword($palabra, "english", "UTF_8");
     $palabra = trim($palabra);
+    $palabra = strtolower($palabra);
     $consulta[$indice] = $palabra;
 }
 $directorio_tfidf = DIR_CORPUS . "/tfidf";
@@ -82,16 +87,21 @@ foreach($consulta as $indice => $palabra)
 {
     $consulta[$indice] = trim($palabra);
 }
-$consulta = implode("|", $consulta);
+$consulta_grep = implode("|", $consulta);
 
 foreach($resultado as $d => $v)
 {
     $fichero = $directorio_corpus . '/' . $d . "\n\n";
     echo $fichero;
     
-    $comando = "egrep -ri --color \"$consulta\" $fichero";
+    $comando = "egrep -ri --color \"$consulta_grep\" $fichero";
     $se = shell_exec($comando);
-    echo $se . "\n";
+    
+    foreach($consulta as $palabra)
+    {
+        $se = preg_replace("/$palabra/i", "\x1b[31m" . $palabra . "\x1b[0m", $se);
+    }
+    echo $se . "\n\n";
     
     $results_per_page++;
     

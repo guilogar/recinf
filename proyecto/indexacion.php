@@ -16,10 +16,9 @@ if(PHP_ZTS && class_exists("Thread"))
     $sw = new DataStockWord();
     $st = new DataStemming();
     $tf = new DataTf();
+    $idf = new DataIdf();
     
-    echo "---------------------------------------------------------------" . "\n";
-    echo "                     Filtro de Caracteres                      " . "\n";
-    echo "---------------------------------------------------------------" . "\n";
+    echo $PRINT_FILTRO_CARACTERES;
     
     // #######################################################
     //                 Filtro de caracteres
@@ -79,11 +78,8 @@ if(PHP_ZTS && class_exists("Thread"))
         file_put_contents($dir . $f, $t);
     }
     
-    echo "===============================================================" . "\n";
-    
-    echo "---------------------------------------------------------------" . "\n";
-    echo "                         StockWord                             " . "\n";
-    echo "---------------------------------------------------------------" . "\n";
+    echo $SEPARADOR;
+    echo $PRINT_STOCKWORD;
     
     // #######################################################
     //                       StockWord
@@ -147,11 +143,8 @@ if(PHP_ZTS && class_exists("Thread"))
         file_put_contents($dir . $s, $w);
     }
     
-    echo "===============================================================" . "\n";
-    
-    echo "---------------------------------------------------------------" . "\n";
-    echo "                         Stemming                              " . "\n";
-    echo "---------------------------------------------------------------" . "\n";
+    echo $SEPARADOR;
+    echo $PRINT_STEMMING;
     
     // #######################################################
     //                       Stemming
@@ -209,11 +202,8 @@ if(PHP_ZTS && class_exists("Thread"))
         file_put_contents($dir . $s, $t);
     }
     
-    echo "===============================================================" . "\n";
-    
-    echo "---------------------------------------------------------------" . "\n";
-    echo "                           TF                              " . "\n";
-    echo "---------------------------------------------------------------" . "\n";
+    echo $SEPARADOR;
+    echo $PRINT_TF;
     
     // #######################################################
     //                       TF
@@ -259,13 +249,8 @@ if(PHP_ZTS && class_exists("Thread"))
     while($pool->collect());
     $pool->shutdown();
     
-    echo "===============================================================" . "\n";
-    
-    echo "---------------------------------------------------------------" . "\n";
-    echo "                             IDF                               " . "\n";
-    echo "---------------------------------------------------------------" . "\n";
-    
-    $idf = new DataIdf();
+    echo $SEPARADOR;
+    echo $PRINT_IDF;
     
     $terminos = array_keys  ((array) $tf->data);
     $valores  = array_values((array) $tf->data);
@@ -284,11 +269,8 @@ if(PHP_ZTS && class_exists("Thread"))
     file_put_contents($directorio_tfidf . 'tf.json', json_encode($tf->data, JSON_PRETTY_PRINT));
     file_put_contents($directorio_tfidf . 'idf.json', json_encode($idf->data, JSON_PRETTY_PRINT));
     
-    echo "===============================================================" . "\n";
-    
-    echo "---------------------------------------------------------------" . "\n";
-    echo "                             TF-IDF                               " . "\n";
-    echo "---------------------------------------------------------------" . "\n";
+    echo $SEPARADOR;
+    echo $PRINT_TFIDF;
     
     $cb = CB;
     $num_cores = num_system_cores();
@@ -312,13 +294,6 @@ if(PHP_ZTS && class_exists("Thread"))
     while($pool->collect());
     $pool->shutdown();
     
-    /*
-     *foreach ($tfidf->data as $value) {
-     *    var_dump($value);
-     *    break;
-     *}
-     */
-    //var_dump(sizeof($tfidf->data["The"]));
     file_put_contents($directorio_tfidf . 'tfidf.json', json_encode($tfidf->data, JSON_PRETTY_PRINT));
     
 } else

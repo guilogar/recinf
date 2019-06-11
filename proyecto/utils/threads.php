@@ -190,6 +190,7 @@ class Preprocesador extends Threaded
                 $texto_fichero_parseado = $filtro->parsear($texto_fichero_parseado);
             }
             $texto_fichero_parseado = trim($texto_fichero_parseado);
+            $texto_fichero_parseado = strtolower($texto_fichero_parseado);
             
             $this->f->synchronized(function ($f, $ruta_fichero, $texto_fichero_parseado)
             {
