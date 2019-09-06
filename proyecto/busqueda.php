@@ -18,7 +18,9 @@ $filtros = array(
 );
 foreach($palabras_vacias as $pv)
 {
-    array_push($filtros, new Filtro('/ '.$pv.' /', ' '));
+    array_push($filtros, new Filtro("/ $pv /", " "));
+    array_push($filtros, new Filtro("/$pv /", " "));
+    array_push($filtros, new Filtro("/ $pv/", " "));
 }
 
 $consulta_str = NULL;
@@ -93,18 +95,18 @@ foreach($resultado as $d => $v)
 {
     $fichero = $directorio_corpus . '/' . $d . "\n\n";
     echo $fichero;
-    
+
     $comando = "egrep -ri --color \"$consulta_grep\" $fichero";
     $se = shell_exec($comando);
-    
+
     foreach($consulta as $palabra)
     {
         $se = preg_replace("/$palabra/i", "\x1b[31m" . $palabra . "\x1b[0m", $se);
     }
     echo $se . "\n\n";
-    
+
     $results_per_page++;
-    
+
     if($results_per_page >= MAX_RESULTS_PER_PAGE)
     {
         $results_per_page = 0; $pages++;
@@ -112,7 +114,7 @@ foreach($resultado as $d => $v)
         echo "======== Página $pages ========" . "\n";
         echo "\n";
     }
-    
+
     if($pages >= MAX_RESULTS_PAGE)
         break;
 }

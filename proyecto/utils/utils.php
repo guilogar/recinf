@@ -4,7 +4,7 @@ function num_system_cores()
 {
     $cmd = "uname";
     $OS = strtolower(trim(shell_exec($cmd)));
-    
+
     switch($OS)
     {
        case('linux'):
@@ -16,9 +16,9 @@ function num_system_cores()
        default:
           unset($cmd);
     }
-    
+
     if ($cmd != '') $cpuCoreNo = intval(trim(shell_exec($cmd)));
-    
+
     return empty($cpuCoreNo) ? 1 : $cpuCoreNo;
 }
 

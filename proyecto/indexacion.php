@@ -10,50 +10,37 @@ if(PHP_ZTS && class_exists("Thread"))
     require_once "utils/threads.php";
     require_once "utils/filtro.php";
     require_once "utils/utils.php";
-    
+
     $dd = new DataDeteccionDirectorios();
     $fp = new DataFicherosPreprocesados();
     $sw = new DataStockWord();
     $st = new DataStemming();
     $tf = new DataTf();
     $idf = new DataIdf();
-    
+
     echo $PRINT_FILTRO_CARACTERES;
-    
+
     // #######################################################
     //                 Filtro de caracteres
     // #######################################################
     $filtros = array(
         new Filtro('/[\.\,¿\?¡\!\=\(\)\<\>\-\:\;\/%]/', " "),
         new Filtro('/[  ]/', " "),
+        new Filtro('/(\r\n|\r|\n)/', " "),
     );
-    
+
     $directorio_corpus = DIR_CORPUS . "/corpus_base";
     $ficheros = scandir($directorio_corpus);
-    
-    $cb = CB;
+    unset($ficheros[0]);
+    unset($ficheros[1]);
+    foreach ($ficheros as $key => $value)
+        $ficheros[$key] = $directorio_corpus . DIRECTORY_SEPARATOR . $value;
+
+    $cb = 0;
     $num_cores = num_system_cores();
     $tam_pool = (int) ($num_cores / (1 - $cb));
-    
     $ventana = (int) (sizeof($ficheros) / $tam_pool);
-    
-    $pool = new Pool($tam_pool);
-    $min = 0;
-    $max = $ventana;
-    for ($i = 0; $i < $tam_pool + 1; $i++)
-    {
-        $ff = array_slice($ficheros, $min, $max);
-        $p = new DeteccionDirectorio($ff, $directorio_corpus, $dd);
-        $pool->submit($p);
-        $min = $max + 1;
-        $max += $ventana;
-    }
-    while($pool->collect());
-    $pool->shutdown();
-    
-    $ficheros = (array) $dd->data;
-    $dd->clean();
-    
+
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
@@ -67,20 +54,20 @@ if(PHP_ZTS && class_exists("Thread"))
     }
     while($pool->collect());
     $pool->shutdown();
-    
+
     $directorio_corpus_preprocesado = DIR_CORPUS . "/corpus_preprocesado";
     if(!is_dir($directorio_corpus_preprocesado))
         mkdir($directorio_corpus_preprocesado, 0777, true);
-    
+
     foreach ($fp->data as $f => $t)
     {
         $dir = $directorio_corpus_preprocesado . DIRECTORY_SEPARATOR;
         file_put_contents($dir . $f, $t);
     }
-    
+
     echo $SEPARADOR;
     echo $PRINT_STOCKWORD;
-    
+
     // #######################################################
     //                       StockWord
     // #######################################################
@@ -89,36 +76,20 @@ if(PHP_ZTS && class_exists("Thread"))
         "\n", file_get_contents($directorio_palabras_vacias)
     );
     $ficheros_preprocesados = scandir($directorio_corpus_preprocesado);
-    
-    $cb = CB;
-    $num_cores = num_system_cores();
-    $tam_pool = (int) ($num_cores / (1 - $cb));
-    
-    $ventana = (int) (sizeof($ficheros_preprocesados) / $tam_pool);
-    
-    $pool = new Pool($tam_pool);
-    $min = 0;
-    $max = $ventana;
-    for ($i = 0; $i < $tam_pool + 1; $i++)
-    {
-        $ff = array_slice($ficheros_preprocesados, $min, $max);
-        $p = new DeteccionDirectorio($ff, $directorio_corpus_preprocesado, $dd);
-        $pool->submit($p);
-        $min = $max + 1;
-        $max += $ventana;
-    }
-    while($pool->collect());
-    $pool->shutdown();
-    
-    $ficheros_preprocesados = (array) $dd->data;
-    $dd->clean();
-    
+    unset($ficheros_preprocesados[0]);
+    unset($ficheros_preprocesados[1]);
+
+    foreach ($ficheros_preprocesados as $key => $value)
+        $ficheros_preprocesados[$key] = $directorio_corpus_preprocesado . DIRECTORY_SEPARATOR . $value;
+
     $filtros = array();
     foreach($palabras_vacias as $pv)
     {
-        array_push($filtros, new Filtro('/ '.$pv.' /', ' '));
+        array_push($filtros, new Filtro("/ $pv /", " "));
+        array_push($filtros, new Filtro("/$pv /", " "));
+        array_push($filtros, new Filtro("/ $pv/", " "));
     }
-    
+
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
@@ -132,55 +103,35 @@ if(PHP_ZTS && class_exists("Thread"))
     }
     while($pool->collect());
     $pool->shutdown();
-    
+
     $directorio_corpus_stockword = DIR_CORPUS . "/corpus_stockword";
     if(!is_dir($directorio_corpus_stockword))
         mkdir($directorio_corpus_stockword, 0777, true);
-    
+
     foreach ($sw->data as $s => $w)
     {
         $dir = $directorio_corpus_stockword . DIRECTORY_SEPARATOR;
         file_put_contents($dir . $s, $w);
     }
-    
+
     echo $SEPARADOR;
     echo $PRINT_STEMMING;
-    
+
     // #######################################################
     //                       Stemming
     // #######################################################
     $ficheros_stockword = scandir($directorio_corpus_stockword);
-    
-    $cb = CB;
-    $num_cores = num_system_cores();
-    $tam_pool = (int) ($num_cores / (1 - $cb));
-    
-    $ventana = (int) (sizeof($ficheros_stockword) / $tam_pool);
-    
+    unset($ficheros_stockword[0]);
+    unset($ficheros_stockword[1]);
+
+    foreach ($ficheros_stockword as $key => $value)
+        $ficheros_stockword[$key] = $directorio_corpus_stockword . DIRECTORY_SEPARATOR . $value;
+
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
-    for ($i = 0; $i < $tam_pool + 1; $i++)
-    {
-        $ff = array_slice($ficheros_stockword, $min, $max);
-        $p = new DeteccionDirectorio($ff, $directorio_corpus_stockword, $dd);
-        $pool->submit($p);
-        $min = $max + 1;
-        $max += $ventana;
-    }
-    while($pool->collect());
-    $pool->shutdown();
-    
-    $ficheros_stockword = (array) $dd->data;
-    $dd->clean();
-    
-    $pool = new Pool($tam_pool);
-    $min = 0;
-    $max = $ventana;
-    
-    $filtros = array(
-        new Filtro('/(\r\n|\r|\n)/', " "),
-    );
+
+    $filtros = array();
     for ($i = 0; $i < $tam_pool + 1; $i++)
     {
         $ff = array_slice($ficheros_stockword, $min, $max);
@@ -191,52 +142,34 @@ if(PHP_ZTS && class_exists("Thread"))
     }
     while($pool->collect());
     $pool->shutdown();
-    
+
     $directorio_corpus_stemming = DIR_CORPUS . "/corpus_stemming";
     if(!is_dir($directorio_corpus_stemming))
         mkdir($directorio_corpus_stemming, 0777, true);
-    
+
     foreach ($st->data as $s => $t)
     {
         $dir = $directorio_corpus_stemming . DIRECTORY_SEPARATOR;
         file_put_contents($dir . $s, $t);
     }
-    
+
     echo $SEPARADOR;
     echo $PRINT_TF;
-    
+
     // #######################################################
     //                       TF
     // #######################################################
     $ficheros_stemming = scandir($directorio_corpus_stemming);
-    
-    $cb = CB;
-    $num_cores = num_system_cores();
-    $tam_pool = (int) ($num_cores / (1 - $cb));
-    
-    $ventana = (int) (sizeof($ficheros_stemming) / $tam_pool);
-    
+    unset($ficheros_stemming[0]);
+    unset($ficheros_stemming[1]);
+
+    foreach ($ficheros_stemming as $key => $value)
+        $ficheros_stemming[$key] = $directorio_corpus_stemming . DIRECTORY_SEPARATOR . $value;
+
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
-    for ($i = 0; $i < $tam_pool + 1; $i++)
-    {
-        $ff = array_slice($ficheros_stemming, $min, $max);
-        $p = new DeteccionDirectorio($ff, $directorio_corpus_stemming, $dd);
-        $pool->submit($p);
-        $min = $max + 1;
-        $max += $ventana;
-    }
-    while($pool->collect());
-    $pool->shutdown();
-    
-    $ficheros_stemming = (array) $dd->data;
-    $dd->clean();
-    
-    $pool = new Pool($tam_pool);
-    $min = 0;
-    $max = $ventana;
-    
+
     $filtros = array();
     for ($i = 0; $i < $tam_pool + 1; $i++)
     {
@@ -248,10 +181,10 @@ if(PHP_ZTS && class_exists("Thread"))
     }
     while($pool->collect());
     $pool->shutdown();
-    
+
     echo $SEPARADOR;
     echo $PRINT_IDF;
-    
+
     $terminos = array_keys  ((array) $tf->data);
     $valores  = array_values((array) $tf->data);
     $frecuencias = array();
@@ -259,28 +192,28 @@ if(PHP_ZTS && class_exists("Thread"))
     {
         array_push($frecuencias, sizeof($v));
     }
-    
+
     $idf->data = array_combine($terminos, $frecuencias);
-    
+
     $directorio_tfidf = DIR_CORPUS . "/tfidf" . DIRECTORY_SEPARATOR;
     if(!is_dir($directorio_tfidf))
         mkdir($directorio_tfidf, 0777, true);
-    
+
     file_put_contents($directorio_tfidf . 'tf.json', json_encode($tf->data, JSON_PRETTY_PRINT));
     file_put_contents($directorio_tfidf . 'idf.json', json_encode($idf->data, JSON_PRETTY_PRINT));
-    
+
     echo $SEPARADOR;
     echo $PRINT_TFIDF;
-    
+
     $cb = CB;
     $num_cores = num_system_cores();
     $tam_pool = (int) ($num_cores / (1 - $cb));
-    
+
     $ventana = (int) (sizeof((array) $tf->data) / $tam_pool);
     $pool = new Pool($tam_pool);
     $min = 0;
     $max = $ventana;
-    
+
     $tfidf = new DataTfIdf();
     $ff_tf  = (array) $tf->data;
     $ff_idf = (array) $idf->data;
@@ -293,10 +226,10 @@ if(PHP_ZTS && class_exists("Thread"))
     }
     while($pool->collect());
     $pool->shutdown();
-    
+
     file_put_contents($directorio_tfidf . 'tfidf.json', json_encode($tfidf->data, JSON_PRETTY_PRINT));
-    
+
 } else
 {
-    
+
 }
