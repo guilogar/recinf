@@ -358,8 +358,7 @@ class TfIdf extends Threaded
         {
             foreach($documentos as $d => $f)
             {
-                $documentos[$d] = $f * $idf[$termino];
-                // $documentos[$d] = log( / $idf[$termino])
+                $documentos[$d] = (double) ($f * (log($idf[$termino] / sizeof($documentos))));
             }
             $data[$termino] = $documentos;
         }
