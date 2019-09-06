@@ -313,7 +313,7 @@ class Tf extends Threaded
                 $palabras_sin_w = array_diff($palabras, $w);
                 $num_palabras_sin_w = sizeof($palabras_sin_w);
                 $ocurrencias = $num_palabras - $num_palabras_sin_w;
-                $tf = (double) 1 + log($ocurrencias);
+                $tf = (double) 1 + abs(log($ocurrencias / sizeof($palabras)));
 
                 $o = array(
                     $fich => $tf
