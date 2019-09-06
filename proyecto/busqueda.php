@@ -7,6 +7,11 @@ define('MAX_RESULTS_PER_PAGE', 5);
 
 require_once "utils/filtro.php";
 
+if(!PHP_ZTS || !class_exists("Thread"))
+{
+    require_once "utils/thread.php";
+}
+
 $directorio_palabras_vacias = "./palabras_vacias.txt";
 $palabras_vacias = explode(
     "\n", file_get_contents($directorio_palabras_vacias)
