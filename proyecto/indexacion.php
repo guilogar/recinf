@@ -27,7 +27,7 @@ echo $PRINT_FILTRO_CARACTERES;
 //                 Filtro de caracteres
 // #######################################################
 $filtros = array(
-    new Filtro('/[\.\,¿\?¡\!\=\(\)\<\>\-\:\;\/%]/', " "),
+    new Filtro('/[\.\"\'\,¿\?¡\!\=\(\)\<\>\-\:\;\/%]/', " "),
     new Filtro('/[  ]/', " "),
     new Filtro('/(\r\n|\r|\n)/', " "),
 );
