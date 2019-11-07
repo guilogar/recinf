@@ -75,8 +75,10 @@ $resultado = array();
 
 foreach($tfidf_consulta as $tic)
 {
+
     foreach($tic as $d => $v)
     {
+      // var_dump($v);
         if(isset($resultado[$d]))
             $resultado[$d] += $v;
         else
@@ -98,7 +100,7 @@ $consulta_grep = implode("|", $consulta);
 
 foreach($resultado as $d => $v)
 {
-    $fichero = $directorio_corpus . '/' . $d . "\n\n";
+    $fichero = $directorio_corpus . '/' . $d . " " . (double) $v . "\n\n";
     echo $fichero;
 
     $comando = "egrep -ri --color \"$consulta_grep\" $fichero";
