@@ -3,6 +3,7 @@
 *.zip
 core
 
+node_modules/*
 *.fls
 *.synctex.gz
 *.aux
