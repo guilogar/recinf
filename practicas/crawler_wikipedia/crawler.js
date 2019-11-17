@@ -62,7 +62,7 @@ async function crawlerWikipedia(url = undefined)
     if(!urlsVisited.includes(url) && urlsVisited.length < LIMIT_PAGES)
     {
         urlsVisited.push(url);
-        console.log(url);
+        //console.log(url);
         request(url, async function(err, resp, body)
         {
             try
@@ -89,3 +89,14 @@ async function crawlerWikipedia(url = undefined)
 }
 
 crawlerWikipedia(crawlerBase.urlBase + crawlerBase.url);
+
+// Para guardar el html en un fichero....
+/* 
+var fs = require('fs');
+var stream = fs.createWriteStream("my_file.txt");
+stream.once('open', function(fd) {
+  stream.write("My first row\n");
+  stream.write("My second row\n");
+  stream.end();
+});
+*/
