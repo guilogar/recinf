@@ -1,5 +1,6 @@
 let request = require('request');
 let cheerio = require('cheerio');
+let fs = require('fs');
 
 const { patrones } = require('./util');
 
@@ -26,7 +27,7 @@ let args = process.argv.slice(2);
 args.forEach(function (param, index, array) {
     let option = param.split('=')[0];
     let value  = param.split('=')[1];
-    
+
     switch(option)
     {
         case '--language': LANGUAGE_BASE = value; break;
@@ -37,7 +38,7 @@ args.forEach(function (param, index, array) {
 
 
 let crawlerBase = undefined;
-  
+
 for(let i = 0; i < languages.length; i++)
 {
     let l = languages[i];
@@ -68,7 +69,15 @@ async function crawlerWikipedia(url = undefined)
             try
             {
                 $ = cheerio.load(body);
-                
+
+                let webTitle = $('title').text();
+                let stream = fs.createWriteStream('pages/' + webTitle + '.html');
+                stream.once('open', function(fd)
+                {
+                    stream.write($.html());
+                    stream.end();
+                });
+
                 documents.push($);
 
                 let links = $('a');
@@ -83,7 +92,10 @@ async function crawlerWikipedia(url = undefined)
                         }
                     }
                 });
-            } catch(error) { }
+            } catch(error)
+            {
+                // console.log(error);
+            }
         });
     }
 }
@@ -91,7 +103,7 @@ async function crawlerWikipedia(url = undefined)
 crawlerWikipedia(crawlerBase.urlBase + crawlerBase.url);
 
 // Para guardar el html en un fichero....
-/* 
+/*
 var fs = require('fs');
 var stream = fs.createWriteStream("my_file.txt");
 stream.once('open', function(fd) {
