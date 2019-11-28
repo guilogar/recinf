@@ -70,7 +70,12 @@ async function crawlerWikipedia(url = undefined)
             {
                 $ = cheerio.load(body);
 
-                let webTitle = $('title').text().replace('/', '');
+                let webTitle = $('title').text().replace('/\//', '');
+                while(webTitle.indexOf('/') >= 0)
+                {
+                    webTitle = webTitle.replace('/\//g', '');
+                    console.log(webTitle);
+                }
                 let stream = fs.createWriteStream('pages/' + webTitle + '.html');
                 stream.once('open', function(fd)
                 {
