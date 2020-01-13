@@ -72,7 +72,7 @@ echo $SEPARADOR;
 echo $PRINT_STOCKWORD;
 
 // #######################################################
-//                       StockWord
+//                       StopWord
 // #######################################################
 $directorio_palabras_vacias = "./palabras_vacias.txt";
 $palabras_vacias = explode(
