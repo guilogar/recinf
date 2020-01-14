@@ -5,13 +5,14 @@
  */
 package com.recinf.proyecto;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import java.io.FileWriter;
+import java.lang.reflect.Type;
 
 /**
  *
@@ -19,13 +20,15 @@ import java.util.Map;
  */
 public class Main {
     
-    public static void main(String[] args) throws IOException
+    public static ArrayList<Filtro> filtrosCaracteres = new ArrayList<>();
+    public static ArrayList<Filtro> filtroStopWords = new ArrayList<>();
+    
+    public static void index() throws IOException
     {
-        Indexacion i = new Indexacion("/home/guillero/web/corpus/corpus_base/");
+        Indexacion i = new Indexacion("/home/guillermo/web/corpus/corpus_base");
         
         // Delete all useless characters
-        // new Filtro("[\.\"\'\,¿\?¡\!\=\(\)\<\>\-\:\;\/%]", " ")
-        ArrayList<Filtro> filtrosCaracteres = new ArrayList<>();
+        // ArrayList<Filtro> filtrosCaracteres = new ArrayList<>();
         filtrosCaracteres.add(
             new Filtro("[\\.\"\',¿\\?¡\\!\\=\\(\\)\\<\\>\\-\\:\\;\\/%]", " ")
         );
@@ -39,7 +42,7 @@ public class Main {
         i.filtrosCaracteres(filtrosCaracteres);
 
         // Delete all stop words
-        ArrayList<Filtro> filtroStopWords = new ArrayList<>();
+        // ArrayList<Filtro> filtroStopWords = new ArrayList<>();
         String[] allStopWords = StopWords.getAllStopWords();
         
         for (String allStopWord : allStopWords)
@@ -59,14 +62,53 @@ public class Main {
         
         i.stopWord(filtroStopWords);
         
-        // Make stem of word all words
+        // Make stem of word with all words
         i.stemming();
         
         //HashMap<String, String> ficheros = i.getFicheros();
-        HashMap<String, HashMap<String, Double>> data = i.tf();
+        HashMap<String, HashMap<String, Double>> tf = i.tf();
+        HashMap<String, HashMap<String, Double>> invertTf = i.getInvertTf();
+        HashMap<String, Double> idf = i.idf();
         
-        JSONObject json = new JSONObject();
-        json.putAll( data );
-        System.out.printf( "JSON: %s", json.toString(2) );
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Type gsonType = new TypeToken<HashMap>(){}.getType();
+        
+        String tfJson = gson.toJson(tf, gsonType);
+        String invertTfJson = gson.toJson(invertTf, gsonType);
+        String idfJson = gson.toJson(idf, gsonType);
+        
+        // System.out.println(tfJson);
+        // System.out.println(idfJson);
+        
+        try (FileWriter file = new FileWriter("/home/guillermo/web/corpus/tf.json"))
+        {
+            file.write(tfJson);
+        }
+        
+        try (FileWriter file = new FileWriter("/home/guillermo/web/corpus/idf.json"))
+        {
+            file.write(idfJson);
+        }
+        
+        try (FileWriter file = new FileWriter("/home/guillermo/web/corpus/invertTf.json"))
+        {
+            file.write(invertTfJson);
+        }
+    }
+    
+    public static void search(String[] args) throws IOException
+    {
+        Busqueda b = new Busqueda("fix dna");
+        b.filtrosCaracteres(filtrosCaracteres);
+        b.stopWord(filtroStopWords);
+        b.stemming();
+        
+        b.search();
+    }
+    
+    public static void main(String[] args) throws IOException
+    {
+        index();
+        search(args);
     }
 }

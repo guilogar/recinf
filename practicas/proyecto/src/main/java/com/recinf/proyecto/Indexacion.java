@@ -9,18 +9,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.tartarus.snowball.SnowballStemmer;
 import org.tartarus.snowball.ext.porterStemmer;
 
@@ -33,14 +27,16 @@ public class Indexacion {
     private HashMap<String, String> ficheros;
     private HashMap<String, HashMap<String, Double>> tf;
     private HashMap<String, Double> idf;
+    private HashMap<String, HashMap<String, Double>> invertTf;
     
     public Indexacion(String directorio) throws IOException
     {
         this.ficheros = new HashMap<>();
         this.tf       = new HashMap<>();
         this.idf      = new HashMap<>();
+        this.invertTf = new HashMap<>();
         
-        final File folder = new File("/home/guillermo/web/corpus/corpus_base");
+        final File folder = new File(directorio);
         
         for (final File fileEntry : folder.listFiles())
         {
@@ -61,6 +57,7 @@ public class Indexacion {
     
     public HashMap<String, String> filtrosCaracteres(ArrayList<Filtro> filtros)
     {
+        System.out.println("empieza el filtro de caracteres");
         Iterator it = this.ficheros.entrySet().iterator();
         
         while (it.hasNext())
@@ -75,6 +72,7 @@ public class Indexacion {
                 text = f.aplicarFiltro(text);
             }
             this.ficheros.replace((String) pair.getKey(), text);
+            // break;
         }
         return this.ficheros;
     }
@@ -97,7 +95,7 @@ public class Indexacion {
             }
             
             this.ficheros.replace((String) pair.getKey(), text);
-            break;
+            // break;
         }
         return this.ficheros;
     }
@@ -133,7 +131,7 @@ public class Indexacion {
             text = String.join(" ", words);
             
             this.ficheros.put((String) pair.getKey(), text);
-            break;
+            // break;
         }
         
         return this.ficheros;
@@ -171,7 +169,8 @@ public class Indexacion {
                 if(count == 0) count = 1;
                 
                 // Calculate the tf of term in this file...
-                double tfValue = 1 + Math.abs(Math.log10((double) count / words.length));
+                // double tfValue = 1 + Math.abs(Math.log10((double) count / words.length));
+                double tfValue = 1 + Math.abs(Math.log10((double) count)) / Math.log10(2);
                 
                 /*
                 // Debug for see if any word have 0 ocurrences...
@@ -196,12 +195,61 @@ public class Indexacion {
                     mapWord.put(fichero, tfValue);
                 }
                 
+                HashMap<String, Double> mapFile = this.invertTf.get(fichero);
+                
+                if(mapFile == null)
+                {
+                    mapFile = new HashMap<String, Double>();
+                    mapFile.put(
+                        wordsWithoutRepeats[i],
+                        tfValue
+                    );
+                    
+                    this.invertTf.put(
+                        fichero, mapFile
+                    );
+                } else
+                {
+                    mapFile.put(
+                        wordsWithoutRepeats[i],
+                        tfValue
+                    );
+                }
+                
                 // System.out.println(wordsWithoutRepeats[i] + " => " + fichero + " = " + tfValue);
             }
-            break;
+            // break;
         }
         
         return this.tf;
+    }
+    
+    public HashMap<String, HashMap<String, Double>> getInvertTf()
+    {
+        return this.invertTf;
+    }
+    
+    public HashMap<String, Double> idf()
+    {
+        System.out.println("empieza el idf");
+        int n = this.ficheros.size();
+        Iterator it = this.tf.entrySet().iterator();
+        
+        while (it.hasNext())
+        {
+            Map.Entry pair = (Map.Entry) it.next();
+            
+            String term = (String) pair.getKey();
+            HashMap<String, Double> hash = (HashMap) pair.getValue();
+            int ni = hash.size();
+            
+            this.idf.put(
+                term,
+                Math.log(n / ni)
+            );
+        }
+        
+        return this.idf;
     }
     
     private String readContent(File file) throws IOException
