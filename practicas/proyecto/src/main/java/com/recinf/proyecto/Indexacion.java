@@ -25,16 +25,18 @@ import org.tartarus.snowball.ext.porterStemmer;
 public class Indexacion {
     
     private HashMap<String, String> ficheros;
+    private HashMap<String, String[]> palabras;
     private HashMap<String, HashMap<String, Double>> tf;
     private HashMap<String, Double> idf;
-    private HashMap<String, HashMap<String, Double>> invertTf;
+    private HashMap<String, Double> longDocumentos;
     
     public Indexacion(String directorio) throws IOException
     {
+        this.palabras = new HashMap<>();
         this.ficheros = new HashMap<>();
         this.tf       = new HashMap<>();
         this.idf      = new HashMap<>();
-        this.invertTf = new HashMap<>();
+        this.longDocumentos = new HashMap<>();
         
         final File folder = new File(directorio);
         
@@ -42,9 +44,11 @@ public class Indexacion {
         {
             if (fileEntry.isFile())
             {
+                String text = this.readContent(fileEntry).toLowerCase();
+                String fileName = fileEntry.getAbsolutePath();
                 this.ficheros.put(
-                    fileEntry.getAbsolutePath(),
-                    this.readContent(fileEntry).toLowerCase()
+                    fileName,
+                    text
                 );
             }
         }
@@ -55,66 +59,54 @@ public class Indexacion {
         return this.ficheros;
     }
     
-    public HashMap<String, String> filtrosCaracteres(ArrayList<Filtro> filtros)
+    public HashMap<String, HashMap<String, Double>> filtrosTF(ArrayList<Filtro> filtros)
     {
-        System.out.println("empieza el filtro de caracteres");
+        System.out.println("empieza el filtro de caracteres, stopwords y stemming");
         Iterator it = this.ficheros.entrySet().iterator();
         
-        while (it.hasNext())
-        {
-            Map.Entry pair = (Map.Entry) it.next();
-            
-            String text = (String) pair.getValue();
-            
-            for(int i = 0; i < filtros.size(); i++)
-            {
-                Filtro f = filtros.get(i);
-                text = f.aplicarFiltro(text);
-            }
-            this.ficheros.replace((String) pair.getKey(), text);
-            // break;
-        }
-        return this.ficheros;
-    }
-    
-    public HashMap<String, String> stopWord(ArrayList<Filtro> filtros)
-    {
-        System.out.println("empieza el stopword");
-        Iterator it = this.ficheros.entrySet().iterator();
-        
-        while (it.hasNext())
-        {
-            Map.Entry pair = (Map.Entry) it.next();
-            
-            String text = (String) pair.getValue();
-            
-            for(int i = 0; i < filtros.size(); i++)
-            {
-                Filtro f = filtros.get(i);
-                text = f.aplicarFiltro(text);
-            }
-            
-            this.ficheros.replace((String) pair.getKey(), text);
-            // break;
-        }
-        return this.ficheros;
-    }
-    
-    public HashMap<String, String> stemming()
-    {
-        System.out.println("empieza el stemming");
         SnowballStemmer stemmer = new porterStemmer();
-
-        Iterator it = this.ficheros.entrySet().iterator();
-        
+        int j = 0;
         while (it.hasNext())
         {
+            j++;
+            System.out.println(j);
+            
             Map.Entry pair = (Map.Entry) it.next();
             
+            String fileName = (String) pair.getKey();
             String text = (String) pair.getValue();
+            
+            // characters and stopwords...
+            for(int i = 0; i < filtros.size(); i++)
+            {
+                Filtro f = filtros.get(i);
+                text = f.aplicarFiltro(text);
+            }
             
             String[] words = text.split(" ");
             
+            String[] allStopWords = StopWords.getAllStopWords();
+            // allStopWords = new String[0];
+            
+            text = "";
+            for(int i = 0; i < words.length; i++)
+            {
+                words[i] = words[i].trim();
+                for (String stopWord : allStopWords)
+                {
+                    if(words[i].equalsIgnoreCase(stopWord))
+                    {
+                        words[i] = "";
+                    }
+                }
+                text += " " + words[i] + " ";
+            }
+            
+            text = text.trim();
+            
+            words = text.split(" ");
+            
+            // stemming...
             for(int i = 0; i < words.length; i++)
             {
                 // delete spaces...
@@ -130,47 +122,30 @@ public class Indexacion {
             
             text = String.join(" ", words);
             
-            this.ficheros.put((String) pair.getKey(), text);
-            // break;
-        }
-        
-        return this.ficheros;
-    }
-    
-    public HashMap<String, HashMap<String, Double>> tf()
-    {
-        System.out.println("empieza el tf");
-        Iterator it = this.ficheros.entrySet().iterator();
-        
-        while (it.hasNext())
-        {
-            
-            Map.Entry pair = (Map.Entry) it.next();
-            
-            String fichero = (String) pair.getKey();
-            String text = (String) pair.getValue();
-            String[] words = text.split(" ");
-            
             String textWithoutRepeats = new LinkedHashSet<String>(
                 Arrays.asList(text.split("\\s+")) ).toString().replaceAll("[\\[\\],]", ""
             );
             
             String[] wordsWithoutRepeats = textWithoutRepeats.split(" ");
             
+            double pesoDocumento = 0;
+            
             for(int i = 0; i < wordsWithoutRepeats.length; i++)
             {
+                if(wordsWithoutRepeats[i].length() == 0) continue;
+                
                 // delete spaces...
                 wordsWithoutRepeats[i] = wordsWithoutRepeats[i].trim();
                 
                 HashMap<String, Double> mapWord = this.tf.get(wordsWithoutRepeats[i]);
                 
                 // count the ocurrencies of word in a file
-                int count = this.countOccurrencies(wordsWithoutRepeats[i], text);
+                int count = this.countOccurrencies(wordsWithoutRepeats[i], words);
                 if(count == 0) count = 1;
                 
                 // Calculate the tf of term in this file...
                 // double tfValue = 1 + Math.abs(Math.log10((double) count / words.length));
-                double tfValue = 1 + Math.abs(Math.log10((double) count)) / Math.log10(2);
+                double tfValue = 1 + Math.log10((double) count) / Math.log10(2);
                 
                 /*
                 // Debug for see if any word have 0 ocurrences...
@@ -182,9 +157,9 @@ public class Indexacion {
                 
                 if(mapWord == null)
                 {
-                    mapWord = new HashMap<String, Double>();
+                    mapWord = new HashMap<>();
                     
-                    mapWord.put(fichero, tfValue);
+                    mapWord.put(fileName, tfValue);
                     
                     this.tf.put(
                         wordsWithoutRepeats[i],
@@ -192,47 +167,35 @@ public class Indexacion {
                     );
                 } else
                 {
-                    mapWord.put(fichero, tfValue);
+                    mapWord.put(fileName, tfValue);
                 }
                 
-                HashMap<String, Double> mapFile = this.invertTf.get(fichero);
-                
-                if(mapFile == null)
-                {
-                    mapFile = new HashMap<String, Double>();
-                    mapFile.put(
-                        wordsWithoutRepeats[i],
-                        tfValue
-                    );
-                    
-                    this.invertTf.put(
-                        fichero, mapFile
-                    );
-                } else
-                {
-                    mapFile.put(
-                        wordsWithoutRepeats[i],
-                        tfValue
-                    );
-                }
-                
-                // System.out.println(wordsWithoutRepeats[i] + " => " + fichero + " = " + tfValue);
+                pesoDocumento += tfValue;
             }
-            // break;
+            
+            this.longDocumentos.put(
+                fileName,
+                pesoDocumento
+            );
         }
         
         return this.tf;
     }
     
-    public HashMap<String, HashMap<String, Double>> getInvertTf()
+    public HashMap<String, HashMap<String, Double>> getTf()
     {
-        return this.invertTf;
+        return this.tf;
+    }
+    
+    public HashMap<String, Double> getLongDocumentos()
+    {
+        return this.longDocumentos;
     }
     
     public HashMap<String, Double> idf()
     {
         System.out.println("empieza el idf");
-        int n = this.ficheros.size();
+        double n = this.ficheros.size();
         Iterator it = this.tf.entrySet().iterator();
         
         while (it.hasNext())
@@ -241,11 +204,11 @@ public class Indexacion {
             
             String term = (String) pair.getKey();
             HashMap<String, Double> hash = (HashMap) pair.getValue();
-            int ni = hash.size();
+            double ni = hash.size();
             
             this.idf.put(
                 term,
-                Math.log(n / ni)
+                Math.log10(n / ni) / Math.log10(2)
             );
         }
         
@@ -270,9 +233,8 @@ public class Indexacion {
         return stringFile;
     }
     
-    private int countOccurrencies(String word, String line)
+    private int countOccurrencies(String word, String[] words)
     {
-        String[] words = line.split(" ");
         int count = 0;
         
         for(int i = 0; i < words.length; i++)

@@ -7,14 +7,22 @@ package com.recinf.proyecto;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import org.tartarus.snowball.SnowballStemmer;
 import org.tartarus.snowball.ext.porterStemmer;
@@ -26,46 +34,27 @@ import org.tartarus.snowball.ext.porterStemmer;
 public class Busqueda {
     
     private String search;
+    private String[] palabras;
     
     public Busqueda(String search)
     {
         this.search = search;
     }
     
-    public String filtrosCaracteres(ArrayList<Filtro> filtros)
+    public String[] filtros(ArrayList<Filtro> filtros)
     {
-        System.out.println("empieza el filtro de caracteres");
-        
-        for(int i = 0; i < filtros.size(); i++)
-        {
-            Filtro f = filtros.get(i);
-            this.search = f.aplicarFiltro(this.search);
-        }
-        
-        return this.search;
-    }
-    
-    public String stopWord(ArrayList<Filtro> filtros)
-    {
-        System.out.println("empieza el stopword");
-        
-        for(int i = 0; i < filtros.size(); i++)
-        {
-            Filtro f = filtros.get(i);
-            this.search = f.aplicarFiltro(this.search);
-        }
-        
-        return this.search;
-    }
-    
-    public String stemming()
-    {
-        System.out.println("empieza el stemming");
-        
+        System.out.println("empieza el filtro de caracteres, stopwords y stemming");
         SnowballStemmer stemmer = new porterStemmer();
-
+        
+        // characters and stopwords...
+        for(int i = 0; i < filtros.size(); i++)
+        {
+            Filtro f = filtros.get(i);
+            this.search = f.aplicarFiltro(this.search);
+        }
+        
         String[] words = this.search.split(" ");
-            
+        // stemming...
         for(int i = 0; i < words.length; i++)
         {
             // delete spaces...
@@ -78,89 +67,89 @@ public class Busqueda {
             String stemmedString = stemmer.getCurrent();
             words[i] = stemmedString;
         }
+        this.palabras = words;
         
-        this.search = String.join(" ", words);
-        
-        return this.search;
+        return this.palabras;
     }
     
     public HashMap<String, Double> search() throws IOException
     {
-        String tfJsonString = this.readContent(
-            new File("/home/guillermo/web/corpus/tf.json")
-        );
-        String idfJsonString = this.readContent(
-            new File("/home/guillermo/web/corpus/idf.json")
-        );
-        String invertTfJsonString = this.readContent(
-            new File("/home/guillermo/web/corpus/invertTf.json")
+        Gson gson = new Gson();
+        
+        JsonReader reader = new JsonReader(new FileReader("/home/guillermo/web/corpus/tf.json"));
+        HashMap<String, HashMap<String, Double>> tf = gson.fromJson(
+            reader,
+            new TypeToken<HashMap<String, HashMap<String, Double>>>() {}.getType()
         );
         
-        HashMap<String, HashMap<String, Double>> tf = new Gson().fromJson(
-            tfJsonString, new TypeToken<HashMap<String, HashMap<String, Double>>>() {}.getType()
+        reader = new JsonReader(new FileReader("/home/guillermo/web/corpus/idf.json"));
+        HashMap<String, Double> idf = gson.fromJson(
+            reader,
+            new TypeToken<HashMap<String, Double>>() {}.getType()
         );
         
-        HashMap<String, Double> idf = new Gson().fromJson(
-            idfJsonString, new TypeToken<HashMap<String, Double>>() {}.getType()
+        
+        reader = new JsonReader(new FileReader("/home/guillermo/web/corpus/longDocumentos.json"));
+        HashMap<String, Double> longDocumentos = gson.fromJson(
+            reader,
+            new TypeToken<HashMap<String, Double>>() {}.getType()
         );
         
-        HashMap<String, HashMap<String, Double>> invertTf = new Gson().fromJson(
-            invertTfJsonString, new TypeToken<HashMap<String, HashMap<String, Double>>>() {}.getType()
-        );
+        HashMap<String, Double> files = new HashMap<>();
         
-        HashSet<String> files = new HashSet<>();
-        
-        String[] words = this.search.split(" ");
+        String[] words = this.palabras;
         
         for(int i = 0; i < words.length; i++)
         {
-            Iterator it = tf.get(words[i]).entrySet().iterator();
-            while (it.hasNext())
+            HashMap<String, Double> ficheros = tf.get(words[i]);
+            
+            if(ficheros != null)
             {
-                Map.Entry pair = (Map.Entry) it.next();
-
-                files.add((String) pair.getKey());
+                Iterator it = ficheros.entrySet().iterator();
+            
+                while (it.hasNext())
+                {
+                    Map.Entry pair = (Map.Entry) it.next();
+                    String fileName = (String) pair.getKey();
+                    double numerador = 0;
+                    
+                    if(files.get(fileName) != null)
+                    {
+                        numerador = (double) files.get(fileName);
+                    }
+                    
+                    double tfValue = (double) ficheros.get(fileName);
+                    double idfValue = (double) idf.get(words[i]);
+                    
+                    numerador += (tfValue * idfValue);
+                    // System.out.println(numerador);
+                    files.put(
+                        fileName,
+                        numerador
+                    );
+                }
             }
         }
         
         HashMap<String, Double> resultSearch = new HashMap<>();
         
-        Iterator it = files.iterator();
+        Iterator it = files.entrySet().iterator();
         while (it.hasNext())
         {
-            String fileName = (String) it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             
-            // sumatorio de todos los terminos a buscar
-            double numerador = 0;
+            String fileName = (String) pair.getKey();
             
-            for(int i = 0; i < words.length; i++)
-            {
-                HashMap<String, Double> ficheros = tf.get(words[i]);
-                double valueTermFile = ficheros.get(fileName);
-                double idfValueTerm = idf.get(words[i]);
-                
-                numerador += idfValueTerm * valueTermFile;
-            }
-            
+            double numerador = (double) pair.getValue();
             // sumatorio de todos los pesos de un fichero
-            double denominador = 0;
-            
-            HashMap<String, Double> terms = invertTf.get(fileName);
-            Iterator itTerms = terms.entrySet().iterator();
-            
-            while (itTerms.hasNext())
-            {
-                Map.Entry pairTerms = (Map.Entry) itTerms.next();
-                double valueTermInFile = (double) pairTerms.getValue();
-                
-                denominador += Math.pow(valueTermInFile, 2);
-            }
+            double denominador = longDocumentos.get(fileName);
             
             // raiz cuadrada del denominador
             denominador = Math.sqrt(denominador);
             
             System.out.println(fileName);
             System.out.println(numerador / denominador);
+            
             // result search
             resultSearch.put(
                 fileName,
@@ -171,7 +160,7 @@ public class Busqueda {
         return resultSearch;
     }
     
-    private String readContent(File file) throws IOException
+    public String readContent(File file) throws IOException
     {
         String strLine;
         String stringFile = "";
@@ -191,7 +180,26 @@ public class Busqueda {
     
     public HashMap<String, Double> ranking(HashMap<String, Double> documents)
     {
+        List<Map.Entry<String, Double> > list = 
+               new LinkedList<Map.Entry<String, Double> >(documents.entrySet()); 
+  
+        // Sort the list 
+        Collections.sort(list, new Comparator<Map.Entry<String, Double> >() { 
+            public int compare(Map.Entry<String, Double> o1,  
+                               Map.Entry<String, Double> o2) 
+            { 
+                return (o2.getValue()).compareTo(o1.getValue()); 
+            } 
+        }); 
+          
+        // put data from sorted list to hashmap  
+        HashMap<String, Double> temp = new LinkedHashMap<String, Double>();
         
-        return null;
+        for (Map.Entry<String, Double> aa : list)
+        { 
+            temp.put(aa.getKey(), aa.getValue()); 
+        } 
+        
+        return temp;
     }
 }
