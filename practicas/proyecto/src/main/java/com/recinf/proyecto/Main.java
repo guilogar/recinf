@@ -24,10 +24,14 @@ import java.util.Map;
 public class Main {
     
     public static ArrayList<Filtro> filtros = new ArrayList<>();
+    public static String dirCorpus = "/home/guillermo/web/corpus/corpus";
+    public static String dirTF = "/home/guillermo/web/corpus/tf.json";
+    public static String dirIDF = "/home/guillermo/web/corpus/idf.json";
+    public static String dirLongDocumentos = "/home/guillermo/web/corpus/longDocumentos.json";
     
     public static void index() throws IOException
     {
-        Indexacion i = new Indexacion("/home/guillermo/web/corpus/corpus");
+        Indexacion i = new Indexacion(dirCorpus);
         
         // Delete all useless characters
         
@@ -65,17 +69,17 @@ public class Main {
         // System.out.println(tfJson);
         // System.out.println(idfJson);
         
-        try (FileWriter file = new FileWriter("/home/guillermo/web/corpus/tf.json"))
+        try (FileWriter file = new FileWriter(dirTF))
         {
             file.write(tfJson);
         }
         
-        try (FileWriter file = new FileWriter("/home/guillermo/web/corpus/idf.json"))
+        try (FileWriter file = new FileWriter(dirIDF))
         {
             file.write(idfJson);
         }
         
-        try (FileWriter file = new FileWriter("/home/guillermo/web/corpus/longDocumentos.json"))
+        try (FileWriter file = new FileWriter(dirLongDocumentos))
         {
             file.write(longDocumentosJson);
         }
@@ -91,22 +95,20 @@ public class Main {
         */
     }
     
-    public static void search(String[] args) throws IOException
+    public static void search(String s, int maxResults) throws IOException
     {
-        System.out.println("Busqueda");
-        Busqueda b = new Busqueda("cancer");
+        System.out.println("Empieza la búsqueda");
+        Busqueda b = new Busqueda(s);
         b.filtros(filtros);
         
-        HashMap<String, Double> bestResults = b.ranking(b.search());
+        HashMap<String, Double> bestResults = b.ranking(
+            b.search(dirTF, dirIDF, dirLongDocumentos)
+        );
         
         System.out.println("===============================");
-        System.out.println("===============================");
-        System.out.println("===============================");
-        System.out.println("===============================");
-        System.out.println("===============================");
-        System.out.println("===============================");
         Iterator it = bestResults.entrySet().iterator();
-        for(int i = 0; i < 10 && it.hasNext(); i++)
+        
+        for(int i = 0; i < maxResults && it.hasNext(); i++)
         {
             Map.Entry pair = (Map.Entry) it.next();
             
@@ -121,7 +123,33 @@ public class Main {
     
     public static void main(String[] args) throws IOException
     {
-        index();
-        search(args);
+        // Comment to mode production with .jar export
+        args = new String[3];
+        
+        // Comment to search and uncomment to index
+        args[0] = "1";
+        
+        // Comment to index and uncomment to search
+        args[0] = "2";
+        args[1] = "cancer";
+        args[2] = "10";
+
+        try
+        {
+            int action = Integer.parseInt(args[0]);
+            
+            switch(action)
+            {
+                case 1: index(); break;
+                case 2: 
+                {
+                    String s = args[1];
+                    int maxResults = Integer.parseInt(args[2]);
+                    search(s, maxResults);
+                } break;
+                
+                default: System.out.println("Bad option. Try again with option 1 or 2"); break;
+            }
+        } catch(Exception e) { }
     }
 }

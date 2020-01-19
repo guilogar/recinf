@@ -65,12 +65,8 @@ public class Indexacion {
         Iterator it = this.ficheros.entrySet().iterator();
         
         SnowballStemmer stemmer = new porterStemmer();
-        int j = 0;
         while (it.hasNext())
         {
-            j++;
-            System.out.println(j);
-            
             Map.Entry pair = (Map.Entry) it.next();
             
             String fileName = (String) pair.getKey();

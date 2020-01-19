@@ -10,11 +10,8 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -72,24 +69,24 @@ public class Busqueda {
         return this.palabras;
     }
     
-    public HashMap<String, Double> search() throws IOException
+    public HashMap<String, Double> search(String dirTF, String dirIDF, String dirLongDocumentos) throws IOException
     {
         Gson gson = new Gson();
         
-        JsonReader reader = new JsonReader(new FileReader("/home/guillermo/web/corpus/tf.json"));
+        JsonReader reader = new JsonReader(new FileReader(dirTF));
         HashMap<String, HashMap<String, Double>> tf = gson.fromJson(
             reader,
             new TypeToken<HashMap<String, HashMap<String, Double>>>() {}.getType()
         );
         
-        reader = new JsonReader(new FileReader("/home/guillermo/web/corpus/idf.json"));
+        reader = new JsonReader(new FileReader(dirIDF));
         HashMap<String, Double> idf = gson.fromJson(
             reader,
             new TypeToken<HashMap<String, Double>>() {}.getType()
         );
         
         
-        reader = new JsonReader(new FileReader("/home/guillermo/web/corpus/longDocumentos.json"));
+        reader = new JsonReader(new FileReader(dirLongDocumentos));
         HashMap<String, Double> longDocumentos = gson.fromJson(
             reader,
             new TypeToken<HashMap<String, Double>>() {}.getType()
@@ -146,9 +143,6 @@ public class Busqueda {
             
             // raiz cuadrada del denominador
             denominador = Math.sqrt(denominador);
-            
-            System.out.println(fileName);
-            System.out.println(numerador / denominador);
             
             // result search
             resultSearch.put(
