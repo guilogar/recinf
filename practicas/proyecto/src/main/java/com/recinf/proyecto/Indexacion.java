@@ -50,6 +50,7 @@ public class Indexacion {
                     fileName,
                     text
                 );
+                System.out.println(fileName);
             }
         }
     }
@@ -77,6 +78,7 @@ public class Indexacion {
             {
                 Filtro f = filtros.get(i);
                 text = f.aplicarFiltro(text);
+                System.out.println(text);
             }
             
             String[] words = text.split(" ");

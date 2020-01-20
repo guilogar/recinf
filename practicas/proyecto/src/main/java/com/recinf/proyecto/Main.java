@@ -99,6 +99,26 @@ public class Main {
     {
         System.out.println("Empieza la búsqueda");
         Busqueda b = new Busqueda(s);
+        
+        if(filtros.isEmpty())
+        {
+            filtros.add(
+                new Filtro("[\\.\"',¿\\?¡\\!\\=\\(\\)\\<\\>\\-\\:\\;\\/%\\*\\+\\$`]", " ")
+            );
+            filtros.add(
+                new Filtro("\\d", " ")
+            );
+            filtros.add(
+                new Filtro("\\u0026", " ")
+            );
+            filtros.add(
+                new Filtro("\\\\", " ")
+            );
+            filtros.add(
+                new Filtro("(\r\n|\r|\n)", " ")
+            );
+        }
+        
         b.filtros(filtros);
         
         HashMap<String, Double> bestResults = b.ranking(
@@ -132,6 +152,7 @@ public class Main {
         // Comment to index and uncomment to search
         args[0] = "2";
         args[1] = "cancer";
+        // args[1] = "bibliometrics";
         args[2] = "10";
 
         try
