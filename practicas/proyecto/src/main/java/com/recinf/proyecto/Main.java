@@ -151,8 +151,8 @@ public class Main {
         
         // Comment to index and uncomment to search
         args[0] = "2";
-        args[1] = "cancer";
-        // args[1] = "bibliometrics";
+        args[1] = "jhghjg jg ghjgjh";
+//        args[1] = "bibliometrics";
         args[2] = "10";
 
         try
